@@ -7,11 +7,14 @@ import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
@@ -27,6 +30,9 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+
+import me.gypsy.service.Constants;
+import me.gypsy.service.FetchAddressIntentService;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -52,7 +58,13 @@ public class MainActivity extends AppCompatActivity {
 
     private LocationSettingsRequest mLocationSettingsRequest;
 
+    private AddressResultReceiver mResultReceiver;
+
+    private String mAddressOutput;
+
     private boolean hasPermission = false;
+
+    private TextView currentLocationTextView;
 
     @Override
     public void onStart() {
@@ -81,6 +93,8 @@ public class MainActivity extends AppCompatActivity {
             public void onLocationResult(LocationResult locationResult) {
                 lastLocation = locationResult.getLastLocation();
 
+                startIntentService();
+
                 if (lastLocation != null) {
                     Log.i(LOG_TAG, String.format("Lo: %f, La: %f", lastLocation.getLongitude(), lastLocation.getLatitude()));
                 } else {
@@ -91,6 +105,9 @@ public class MainActivity extends AppCompatActivity {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mSettingsClient = LocationServices.getSettingsClient(this);
+        mResultReceiver = new AddressResultReceiver(new Handler());
+
+        currentLocationTextView = (TextView) findViewById(R.id.currentLocation);
     }
 
     @Override
@@ -267,5 +284,40 @@ public class MainActivity extends AppCompatActivity {
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
         builder.addLocationRequest(locationRequest);
         mLocationSettingsRequest = builder.build();
+    }
+
+    protected void startIntentService() {
+        Intent intent = new Intent(this, FetchAddressIntentService.class);
+        intent.putExtra(Constants.RECEIVER, mResultReceiver);
+        intent.putExtra(Constants.LOCATION_DATA_EXTRA, lastLocation);
+        startService(intent);
+    }
+
+    private void displayAddressOutput() {
+        currentLocationTextView.setText(mAddressOutput);
+    }
+
+    class AddressResultReceiver extends ResultReceiver {
+        public AddressResultReceiver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+
+            // Display the address string
+            // or an error message sent from the intent service.
+            String result = resultData.getString(Constants.RESULT_DATA_KEY);
+
+            // Show a toast message if an address was found.
+            if (resultCode == Constants.SUCCESS_RESULT) {
+                mAddressOutput = String.format(getString(R.string.current_location), result);
+                Toast.makeText(MainActivity.this, getString(R.string.address_found), Toast.LENGTH_SHORT).show();
+            } else {
+                mAddressOutput = result;
+            }
+
+            displayAddressOutput();
+        }
     }
 }

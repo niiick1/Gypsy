@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="me.gypsy">
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -18,9 +20,14 @@
         </activity>
         <activity
             android:name=".DisplayMessageActivity"
-            android:parentActivityName=".MainActivity">
-        </activity>
+            android:parentActivityName=".MainActivity"></activity>
+
+        <service
+            android:name=".service.FetchAddressIntentService"
+            android:exported="false" />
+        <service
+            android:name=".service.FetchAddressIntentService"
+            android:exported="false"></service>
     </application>
 
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 </manifest>
