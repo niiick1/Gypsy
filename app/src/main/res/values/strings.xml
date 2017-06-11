@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Gypsy</string>
+    <string name="unable_retrieve_location">Unable to retrieve your location...</string>
+    <string name="current_location">You are on %1$s</string>
+</resources>
